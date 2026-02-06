@@ -1,42 +1,80 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'; // Tog bort 'React' här för att slippa fel nr 1
 import './App.css';
 
-// --- 1. DATA: EMERGENCE TREE (Dina Perks / Insikter) ---
-const EMERGENCE_TREE = {
-  Structure: { // Fysik / Hälsa
+// --- TYPEDEFINITIONER (För att göra TypeScript nöjd) ---
+interface StatData {
+  level: number;
+  xp: number;
+}
+
+interface Stats {
+  [key: string]: StatData;
+}
+
+interface ProtocolAction {
+  name: string;
+  xp: number;
+  load: number;
+}
+
+interface Protocols {
+  [key: string]: ProtocolAction[];
+}
+
+interface Perk {
+  title: string;
+  desc: string;
+}
+
+interface EmergenceTree {
+  [key: string]: {
+    [level: number]: Perk;
+  };
+}
+
+interface LevelUpData {
+  category: string;
+  level: number;
+  title: string;
+  desc: string;
+}
+
+// --- 1. DATA: EMERGENCE TREE ---
+const EMERGENCE_TREE: EmergenceTree = {
+  Structure: {
     2: { title: "MYOFIBRIL ADAPTATION", desc: "Muskelminne etablerat. Startmotståndet för träning har minskat." },
     3: { title: "SKELETAL INTEGRITY", desc: "Hållningen förbättrad. Ergonomisk belastning ger mindre slitage." },
     4: { title: "IRON TEMPLE", desc: "Kroppen ber om aktivitet istället för att undvika den." }
   },
-  Yield: { // Produktivitet / Skrivande
+  Yield: {
     2: { title: "THE HEMINGWAY BRIDGE", desc: "Förmågan att sluta när du vet vad som kommer härnäst." },
     3: { title: "FLOW STATE ACCESS", desc: "Tiden för att nå djupt fokus har halverats." },
     4: { title: "CONCEPTUAL DENSITY", desc: "Du säger mer med färre ord. Textens densitet har ökat." }
   },
-  Sense: { // Lärande / Systemförståelse
+  Sense: {
     2: { title: "PATTERN RECOGNITION", desc: "Du ser systemfel innan de inträffar." },
     3: { title: "CYBERNETIC LOOP", desc: "Feedback från omvärlden integreras nu automatiskt." },
     4: { title: "META-COGNITION", desc: "Du tänker på hur du tänker medan du tänker." }
   },
-  Tuning: { // Balans / Planering
+  Tuning: {
     2: { title: "NOISE FILTER", desc: "Irrelevanta signaler filtreras bort automatiskt." },
     3: { title: "AGILE ADAPTATION", desc: "Schemat är inte längre en lag, utan en hypotes." }
   },
-  Energy: { // Kost / Trädgård
+  Energy: {
     2: { title: "PHOTOSYNTHESIS", desc: "Vistelse i zon 3 (Uppsala) laddar batterierna 20% snabbare." },
     3: { title: "GASTRIC RHYTHM", desc: "Du känner kroppens signaler innan energin dippar." },
     4: { title: "BIOMASS RECYCLING", desc: "Allt är näring. Även motgångar komposteras till växtkraft." }
   },
-  Morale: { // Socialt
+  Morale: {
     2: { title: "SIGNAL CLARITY", desc: "Din kommunikation når fram utan brus." },
     3: { title: "SOCIAL BATTERY EXTENDED", desc: "Interaktion drar mindre energi." }
   }
 };
 
-// --- 2. DATA: PROTOCOLS (Dina Handlingar) ---
-const PROTOCOLS = {
+// --- 2. DATA: PROTOCOLS ---
+const PROTOCOLS: Protocols = {
   Structure: [
-    { name: "Gym / Styrka", xp: 25, load: -5 }, // Ökat XP för test
+    { name: "Gym / Styrka", xp: 25, load: -5 },
     { name: "Promenad", xp: 15, load: -10 },
     { name: "Ergonomi-check", xp: 10, load: 0 }
   ],
@@ -69,11 +107,12 @@ const PROTOCOLS = {
 
 export default function App() {
   
-  // SETUP
-  const [stats, setStats] = useState(() => {
+  // SETUP STATE
+  const [stats, setStats] = useState<Stats>(() => {
     const saved = localStorage.getItem('vsm-stats');
     let parsed = saved ? JSON.parse(saved) : null;
-    const defaults = {
+    
+    const defaults: Stats = {
       Structure: { level: 1, xp: 10 },
       Yield: { level: 1, xp: 5 },
       Sense: { level: 1, xp: 8 },
@@ -81,23 +120,28 @@ export default function App() {
       Energy: { level: 1, xp: 12 },
       Morale: { level: 1, xp: 4 }
     };
+
     if (!parsed) return defaults;
-    if (typeof parsed.Structure === 'number') { // Migrering
-       const migrated = {};
+
+    // Migrering för gammal data
+    // @ts-ignore (Vi ignorerar typkollen här för säkerhets skull vid migrering)
+    if (typeof parsed.Structure === 'number') {
+       const migrated: Stats = {};
+       // @ts-ignore
        Object.keys(parsed).forEach(k => migrated[k] = { level: 1, xp: parsed[k] });
        return migrated;
     }
     return parsed;
   });
 
-  const [load, setLoad] = useState(() => {
+  const [load, setLoad] = useState<number>(() => {
     const saved = localStorage.getItem('vsm-load');
     return saved ? JSON.parse(saved) : 20;
   });
   
-  const [logs, setLogs] = useState(["SYSTEM ONLINE.", "AWAITING INPUT."]);
-  const [activeMenu, setActiveMenu] = useState(null);
-  const [levelUpData, setLevelUpData] = useState(null); // { category, level, perkTitle, perkDesc }
+  const [logs, setLogs] = useState<string[]>(["SYSTEM ONLINE.", "AWAITING INPUT."]);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [levelUpData, setLevelUpData] = useState<LevelUpData | null>(null);
 
   useEffect(() => {
     localStorage.setItem('vsm-stats', JSON.stringify(stats));
@@ -105,11 +149,11 @@ export default function App() {
   }, [stats, load]);
 
   // LOGIK
-  const addLog = (text) => {
+  const addLog = (text: string) => {
     setLogs(prev => [text, ...prev].slice(0, 5));
   };
 
-  const executeProtocol = (category, action) => {
+  const executeProtocol = (category: string, action: ProtocolAction) => {
     setLoad(prev => Math.max(0, Math.min(100, prev + action.load)));
 
     setStats(prev => {
@@ -117,19 +161,16 @@ export default function App() {
       let newXp = currentStat.xp + action.xp;
       let newLevel = currentStat.level;
       let leveledUp = false;
-      let perkInfo = null;
+      let perkInfo: Perk = { title: "SYSTEM OPTIMIZED", desc: "Capacity increased." };
 
       if (newXp >= 100) {
         newXp = newXp - 100;
         newLevel += 1;
         leveledUp = true;
         
-        // Hämta perk från trädet
         const perk = EMERGENCE_TREE[category]?.[newLevel];
         if (perk) {
           perkInfo = perk;
-        } else {
-          perkInfo = { title: "SYSTEM OPTIMIZED", desc: "Capacity increased." };
         }
       }
 
@@ -209,7 +250,7 @@ export default function App() {
           ))}
         </div>
 
-        {/* --- LEVEL UP MODAL (NEW) --- */}
+        {/* --- LEVEL UP MODAL --- */}
         {levelUpData && (
           <div className="levelup-overlay" onClick={() => setLevelUpData(null)}>
             <div className="levelup-box">
