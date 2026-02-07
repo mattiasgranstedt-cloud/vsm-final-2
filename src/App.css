@@ -1,218 +1,310 @@
-@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-
-body {
-  background-color: #050505;
-  color: #33ff00;
-  font-family: 'VT323', monospace;
-  margin: 0;
-  overflow: hidden; /* Förhindra scroll på "skärmen" */
+/* --- RESET & BASE --- */
+* {
+  box-sizing: border-box;
 }
 
-/* Scanline effekt - gör att det ser ut som en gammal TV */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #000;
+  color: #33ff00;
+  font-family: 'Courier New', Courier, monospace;
+  overflow-x: hidden;
+  -webkit-font-smoothing: none;
+}
+
+/* --- MAIN CONTAINER & SCANLINES --- */
+.main {
+  min-height: 100vh;
+  padding: 20px;
+  position: relative;
+  transition: all 0.5s ease;
+  border: 2px solid transparent; /* För att border-animationen ska funka snyggt */
+}
+
 .scanlines {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: linear-gradient(
     to bottom,
-    rgba(255,255,255,0),
-    rgba(255,255,255,0) 50%,
-    rgba(0,0,0,0.2) 50%,
-    rgba(0,0,0,0.2)
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0) 50%,
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.2)
   );
   background-size: 100% 4px;
-  pointer-events: none; /* Klick går igenom */
+  pointer-events: none;
   z-index: 10;
+  opacity: 0.6;
 }
 
 .container {
-  padding: 20px;
   max-width: 600px;
   margin: 0 auto;
-  border: 2px solid #33ff33;
-  height: 90vh;
-  margin-top: 2vh;
-  box-shadow: 0 0 20px #33ff00 inset;
   position: relative;
-  display: flex;
-  flex-direction: column;
+  z-index: 20;
 }
 
 h1 {
-  text-shadow: 0 0 5px #33ff00;
+  font-size: 1.2rem;
   text-align: center;
   border-bottom: 2px solid #33ff00;
-  margin-top: 0;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  text-shadow: 0 0 5px #33ff00;
 }
 
-/* Mätare */
-.meter-container {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  font-size: 1.2rem;
-  align-items: center;
+h2 {
+  font-size: 1rem;
+  border-bottom: 1px dashed #33ff00;
+  padding-bottom: 5px;
+}
+
+/* --- LOAD METER --- */
+.load-text {
+  color: #ff3333;
+  animation: blink-text 1s infinite;
+}
+
+@keyframes blink-text {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
 }
 
 .progress-bar {
-  background: #003300;
-  width: 150px;
+  background: #111;
+  border: 1px solid #333;
   height: 20px;
-  border: 1px solid #33ff00;
+  margin-top: 5px;
   position: relative;
 }
 
-.fill {
-  background: #33ff00;
-  height: 100%;
-  box-shadow: 0 0 10px #33ff00;
-}
-
-/* Load mätare (Röd om hög) */
-.load-bar .fill {
-  background: #ff3300;
-  box-shadow: 0 0 10px #ff3300;
-}
-.load-text { color: #ff3300; text-shadow: 0 0 5px #ff3300; }
-
-button {
-  background: #001100;
+.load-bar {
+  height: 30px;
   border: 1px solid #33ff00;
-  color: #33ff00;
-  font-family: 'VT323', monospace;
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 2px 10px;
-  text-transform: uppercase;
+  box-shadow: 0 0 10px rgba(51, 255, 0, 0.2);
 }
 
-button:hover {
+.fill {
+  height: 100%;
+  background: #33ff00;
+  transition: width 0.3s ease, background-color 0.5s ease;
+}
+
+/* --- STATS GRID --- */
+.stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.meter-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-level-badge {
   background: #33ff00;
   color: #000;
+  padding: 0 4px;
+  margin-right: 5px;
+  font-weight: bold;
 }
 
-.log-window {
-  margin-top: auto;
-  border-top: 1px dashed #33ff00;
-  padding-top: 10px;
-  height: 150px;
-  overflow-y: auto;
-  font-size: 0.9rem;
-  opacity: 0.8;
+button {
+  background: black;
+  color: #33ff00;
+  border: 1px solid #33ff00;
+  padding: 5px 10px;
+  font-family: inherit;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-size: 0.8rem;
 }
 
+button:active {
+  background: #33ff00;
+  color: black;
+}
+
+/* --- DURESS MODES (Ångest / Depression) --- */
+
+.duress-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.duress-btn {
+  flex: 1;
+  padding: 15px 5px;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  background: #111;
+  border: 1px solid #444;
+  color: #666;
+  transition: all 0.3s;
+  font-size: 0.75rem;
+}
+
+/* Röd knapp (Anxiety) */
+.duress-btn.anxiety.active {
+  background: #330000;
+  border-color: #ff3333;
+  color: #ff3333;
+  box-shadow: 0 0 15px #ff0000;
+}
+
+/* Blå knapp (Depression) */
+.duress-btn.depression.active {
+  background: #001122;
+  border-color: #00ccff;
+  color: #00ccff;
+  box-shadow: 0 0 15px #00ccff;
+}
+
+/* Hela appen pulserar vid Anxiety */
+.mode-anxiety {
+  border: 2px solid #ff3333;
+  box-shadow: inset 0 0 50px rgba(255, 50, 50, 0.2);
+  animation: pulse-red 1.5s infinite;
+}
+
+/* Hela appen andas vid Depression */
+.mode-depression {
+  border: 2px solid #00ccff;
+  box-shadow: inset 0 0 80px rgba(0, 200, 255, 0.15);
+  animation: pulse-blue 4s infinite;
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: inset 0 0 30px rgba(255, 0, 0, 0.1); border-color: #aa0000; }
+  50% { box-shadow: inset 0 0 80px rgba(255, 0, 0, 0.3); border-color: #ff3333; }
+  100% { box-shadow: inset 0 0 30px rgba(255, 0, 0, 0.1); border-color: #aa0000; }
+}
+
+@keyframes pulse-blue {
+  0% { box-shadow: inset 0 0 20px rgba(0, 200, 255, 0.1); border-color: #004466; }
+  50% { box-shadow: inset 0 0 100px rgba(0, 200, 255, 0.2); border-color: #00ccff; }
+  100% { box-shadow: inset 0 0 20px rgba(0, 200, 255, 0.1); border-color: #004466; }
+}
+
+/* --- REACTION CONTROLS (Resist vs Accept) --- */
+.reaction-container {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+/* RESIST BUTTON */
 .glitch-btn {
-  width: 100%;
-  padding: 15px;
-  margin-top: 10px;
-  font-size: 1.5rem;
-  border: 2px dashed #33ff00;
-  animation: pulse 2s infinite;
+  flex: 1; 
+  background: #220000;
+  border: 1px solid #ff3333;
+  color: #ff3333;
+  padding: 15px 5px;
+  text-transform: uppercase;
+  font-family: 'Courier New', monospace;
+  cursor: pointer;
+  position: relative;
+  font-size: 0.8rem;
+  transition: all 0.2s;
 }
 
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.7; }
-  100% { opacity: 1; }
-} 
-/* --- NYTT FÖR ITERATION 2: MODAL --- */
+.glitch-btn:active {
+  background: #ff3333;
+  color: black;
+  box-shadow: 0 0 15px #ff3333;
+}
 
+/* ACCEPT BUTTON */
+.accept-btn {
+  flex: 1;
+  background: #002200;
+  border: 1px solid #33ff00;
+  color: #33ff00;
+  padding: 15px 5px;
+  text-transform: uppercase;
+  font-family: 'Courier New', monospace;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.accept-btn:active {
+  background: #33ff00;
+  color: #000;
+  box-shadow: 0 0 20px #33ff00;
+}
+
+/* --- MODALS (Menus & Popups) --- */
 .modal-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 10, 0, 0.85); /* Mörkare bakgrund */
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 20;
+  z-index: 50;
 }
 
 .modal {
   background: #000;
   border: 2px solid #33ff00;
   padding: 20px;
-  width: 80%;
+  width: 90%;
   max-width: 400px;
-  box-shadow: 0 0 30px #33ff00;
-  text-align: center;
-}
-
-.modal h2 {
-  margin-top: 0;
-  border-bottom: 1px dashed #33ff00;
-  padding-bottom: 10px;
+  box-shadow: 0 0 30px rgba(51, 255, 0, 0.3);
 }
 
 .action-btn {
-  display: block;
   width: 100%;
+  padding: 15px;
   margin-bottom: 10px;
-  padding: 10px;
-  background: #001100;
-  border: 1px solid #33ff00;
-  color: #33ff00;
-  font-family: 'VT323', monospace;
-  font-size: 1.2rem;
-  text-align: left;
-  cursor: pointer;
-}
-
-.action-btn:hover {
-  background: #33ff00;
-  color: #000;
-}
-
-.cancel-btn {
-  margin-top: 10px;
-  background: #330000;
-  border-color: #ff3300;
-  color: #ff3300;
-}
-.cancel-btn:hover {
-  background: #ff3300;
-  color: #000;
-}
-.action-btn {
-  display: flex; /* Gör att vi kan lägga text till vänster och siffror till höger */
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
-  margin-bottom: 12px;
-  padding: 12px;
-  background: #001100;
+  background: #111;
   border: 1px solid #33ff00;
-  color: #33ff00;
-  font-family: 'VT323', monospace;
-  font-size: 1.1rem;
-  cursor: pointer;
-  text-align: left;
-}
-
-.action-btn:hover {
-  border-color: #fff;
-  background: #002200;
 }
 
 .action-details {
-  font-size: 0.85em;
   text-align: right;
+  font-size: 0.8rem;
 }
 
-/* Färger för belastning */
-.strain-high { color: #ff3300; text-shadow: 0 0 2px #ff0000; } /* Hög Load = Röd */
-.strain-low { color: #ffff00; } /* Låg Load = Gul */
-.recovery { color: #33ffff; text-shadow: 0 0 2px #33ffff; }   /* Återhämtning = Cyan/Ljusblå */
+.strain-high { color: #ff3333; }
+.strain-low { color: #ffff33; }
+.recovery { color: #33ccff; }
+
+.cancel-btn {
+  margin-top: 15px;
+  border-color: #666;
+  color: #666;
+}
+
+/* --- LOG WINDOW --- */
+.log-window {
+  margin-top: 20px;
+  border-top: 1px dashed #333;
+  padding-top: 10px;
+  font-size: 0.8rem;
+  color: #888;
+  height: 100px;
+  overflow: hidden;
+}
+
 /* --- LEVEL UP ANIMATIONS --- */
 
 .levelup-overlay {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 50, 0, 0.9);
+  background: rgba(0, 50, 0, 0.95);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -222,7 +314,7 @@ button:hover {
 
 @keyframes flash {
   0% { background: #33ff00; }
-  100% { background: rgba(0, 50, 0, 0.9); }
+  100% { background: rgba(0, 50, 0, 0.95); }
 }
 
 .levelup-box {
@@ -231,24 +323,18 @@ button:hover {
   background: #000;
   text-align: center;
   box-shadow: 0 0 50px #33ff00;
-  transform: scale(1.2);
+  transform: scale(1.1);
+  width: 90%;
 }
 
 .levelup-title {
-  font-size: 2.5rem;
+  font-size: 1.8rem;
   margin: 0;
+  color: #33ff00;
   animation: blink 0.5s infinite alternate;
 }
 
 @keyframes blink {
   from { opacity: 1; text-shadow: 0 0 10px #33ff00; }
   to { opacity: 0.5; text-shadow: none; }
-}
-
-.stat-level-badge {
-  background: #33ff00;
-  color: #000;
-  padding: 0 4px;
-  margin-right: 5px;
-  font-weight: bold;
 }
