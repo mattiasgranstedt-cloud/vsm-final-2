@@ -163,20 +163,13 @@ export default function App() {
   // --- REACTION FUNCTIONS ---
   
   const handleJamSignal = () => {
-    // Motstånd: Kostar lite energi att blockera, men minskar Load.
     setLoad(prev => Math.max(0, prev - 5));
     addLog("> SIGNAL JAMMED. RESISTANCE SUCCESSFUL.");
   };
 
   const handleAcceptance = () => {
-    // Acceptans: Släpper igenom signalen utan att reagera. Minskar Load genom dämpning.
-    // Vi kan också ge lite Tuning-XP här om vi vill, men håller det enkelt nu.
     setLoad(prev => Math.max(0, prev - 5));
     addLog("> SIGNAL ACKNOWLEDGED. INTEGRATION COMPLETE.");
-  };
-
-  const cycleEntropy = () => {
-    // Deprecated. But keeping logic if needed later.
   };
 
   // UI Helpers
@@ -263,7 +256,7 @@ export default function App() {
           })}
         </div>
 
-        {/* REACTION CONTROLS (NEW) */}
+        {/* REACTION CONTROLS */}
         <div className="reaction-container">
           <button className="glitch-btn" onClick={handleJamSignal}>
             [ JAM / RESIST ]
