@@ -1,77 +1,49 @@
-import { useState, useEffect } from 'react'; // Tog bort 'React' här för att slippa fel nr 1
+import { useState, useEffect } from 'react';
 import './App.css';
 
-// --- TYPEDEFINITIONER (För att göra TypeScript nöjd) ---
-interface StatData {
-  level: number;
-  xp: number;
-}
+// --- TYPES ---
+interface StatData { level: number; xp: number; }
+interface Stats { [key: string]: StatData; }
+interface ProtocolAction { name: string; xp: number; load: number; }
+interface Protocols { [key: string]: ProtocolAction[]; }
+interface Perk { title: string; desc: string; }
+interface EmergenceTree { [key: string]: { [level: number]: Perk; }; }
+interface LevelUpData { category: string; level: number; title: string; desc: string; }
 
-interface Stats {
-  [key: string]: StatData;
-}
+type DuressMode = 'NONE' | 'ANXIETY' | 'DEPRESSION';
 
-interface ProtocolAction {
-  name: string;
-  xp: number;
-  load: number;
-}
-
-interface Protocols {
-  [key: string]: ProtocolAction[];
-}
-
-interface Perk {
-  title: string;
-  desc: string;
-}
-
-interface EmergenceTree {
-  [key: string]: {
-    [level: number]: Perk;
-  };
-}
-
-interface LevelUpData {
-  category: string;
-  level: number;
-  title: string;
-  desc: string;
-}
-
-// --- 1. DATA: EMERGENCE TREE ---
+// --- DATA: EMERGENCE TREE ---
 const EMERGENCE_TREE: EmergenceTree = {
-  Structure: {
-    2: { title: "MYOFIBRIL ADAPTATION", desc: "Muskelminne etablerat. Startmotståndet för träning har minskat." },
-    3: { title: "SKELETAL INTEGRITY", desc: "Hållningen förbättrad. Ergonomisk belastning ger mindre slitage." },
-    4: { title: "IRON TEMPLE", desc: "Kroppen ber om aktivitet istället för att undvika den." }
+  Structure: { 
+    2: { title: "CONSTRAINT TIGHTENING", desc: "Systemet har etablerat nya gränser. Det krävs mindre energi att välja rörelse." },
+    3: { title: "SCAFFOLDING ROBUSTNESS", desc: "Den fysiska strukturen kan bära tyngre kognitiva laster utan kollaps." },
+    4: { title: "ADAPTIVE CAPACITY", desc: "Kroppen är nu en möjliggörare för oplanerade handlingar." }
   },
-  Yield: {
-    2: { title: "THE HEMINGWAY BRIDGE", desc: "Förmågan att sluta när du vet vad som kommer härnäst." },
-    3: { title: "FLOW STATE ACCESS", desc: "Tiden för att nå djupt fokus har halverats." },
-    4: { title: "CONCEPTUAL DENSITY", desc: "Du säger mer med färre ord. Textens densitet har ökat." }
+  Yield: { 
+    2: { title: "COHERENCE INCREASED", desc: "Signal-brus-förhållandet optimerat. Lättare att se mönster i kaos." },
+    3: { title: "EXAPTATION READY", desc: "Gamla idéer kan användas på nya sätt. Systemet redo för innovation." },
+    4: { title: "OBLIQUITY", desc: "Resultat uppnås indirekt. Fokus på processen ger produkten som bieffekt." }
   },
-  Sense: {
-    2: { title: "PATTERN RECOGNITION", desc: "Du ser systemfel innan de inträffar." },
-    3: { title: "CYBERNETIC LOOP", desc: "Feedback från omvärlden integreras nu automatiskt." },
-    4: { title: "META-COGNITION", desc: "Du tänker på hur du tänker medan du tänker." }
+  Sense: { 
+    2: { title: "WEAK SIGNAL DETECTION", desc: "Du uppfattar avvikelser i omgivningen innan de blir kriser." },
+    3: { title: "ABDUCTIVE REASONING", desc: "Förmågan att gissa kvalificerat baserat på ofullständig data har ökat." },
+    4: { title: "SENSE-MAKING FLUIDITY", desc: "Du navigerar snabbare mellan ordning och komplexitet." }
   },
-  Tuning: {
-    2: { title: "NOISE FILTER", desc: "Irrelevanta signaler filtreras bort automatiskt." },
-    3: { title: "AGILE ADAPTATION", desc: "Schemat är inte längre en lag, utan en hypotes." }
+  Tuning: { 
+    2: { title: "DAMPENING FEEDBACK", desc: "Negativa loopar dämpas snabbare. Återgång till jämvikt." },
+    3: { title: "HEURISTICS UPGRADE", desc: "Tumreglerna för beslut förfinade. Du behöver inte tänka, du 'vet'." }
   },
-  Energy: {
-    2: { title: "PHOTOSYNTHESIS", desc: "Vistelse i zon 3 (Uppsala) laddar batterierna 20% snabbare." },
-    3: { title: "GASTRIC RHYTHM", desc: "Du känner kroppens signaler innan energin dippar." },
-    4: { title: "BIOMASS RECYCLING", desc: "Allt är näring. Även motgångar komposteras till växtkraft." }
+  Energy: { 
+    2: { title: "COUPLING WITH NATURE", desc: "Systemgränsen luckras upp. Utbyte av energi effektiviseras." },
+    3: { title: "METABOLIC FLEXIBILITY", desc: "Systemet växlar bränslekälla utan prestandaförlust." },
+    4: { title: "REGENERATIVE LOOPS", desc: "Output från en process blir input i nästa." }
   },
-  Morale: {
-    2: { title: "SIGNAL CLARITY", desc: "Din kommunikation når fram utan brus." },
-    3: { title: "SOCIAL BATTERY EXTENDED", desc: "Interaktion drar mindre energi." }
+  Morale: { 
+    2: { title: "ATTRACTOR STATE", desc: "Din närvaro stabiliserar andra system (människor) i närheten." },
+    3: { title: "SOCIAL ENTANGLEMENT", desc: "Du påverkar nätverket genom att bara vara en nod i det." }
   }
 };
 
-// --- 2. DATA: PROTOCOLS ---
 const PROTOCOLS: Protocols = {
   Structure: [
     { name: "Gym / Styrka", xp: 25, load: -5 },
@@ -79,39 +51,37 @@ const PROTOCOLS: Protocols = {
     { name: "Ergonomi-check", xp: 10, load: 0 }
   ],
   Yield: [
-    { name: "Deep Work (Skriva)", xp: 25, load: 10 },
-    { name: "Admin / E-mail", xp: 10, load: 5 },
-    { name: "Visualisera Problem", xp: 15, load: 5 }
+    { name: "Deep Work", xp: 25, load: 10 },
+    { name: "Admin / Mail", xp: 10, load: 5 },
+    { name: "Visualisering", xp: 15, load: 5 }
   ],
   Sense: [
     { name: "Läsa fackbok", xp: 15, load: -2 },
-    { name: "Reflektion / Dagbok", xp: 20, load: -15 },
+    { name: "Reflektion", xp: 20, load: -15 },
     { name: "Systemanalys", xp: 15, load: 5 }
   ],
   Tuning: [
     { name: "Planera dagen", xp: 15, load: -5 },
     { name: "Rensa 'Noise'", xp: 10, load: -2 },
-    { name: "Spara till Buffert", xp: 15, load: 0 }
+    { name: "Buffertspar", xp: 15, load: 0 }
   ],
   Energy: [
-    { name: "Trädgård (Biomassa)", xp: 30, load: -20 },
+    { name: "Trädgård", xp: 30, load: -20 },
     { name: "Äta Protein", xp: 15, load: -5 },
-    { name: "Vila / Hydrering", xp: 10, load: 0 }
+    { name: "Vila / Vatten", xp: 10, load: 0 }
   ],
   Morale: [
-    { name: "Social interaktion", xp: 15, load: 5 },
+    { name: "Socialt", xp: 15, load: 5 },
     { name: "Vårda relation", xp: 20, load: -5 },
     { name: "Klä sig snyggt", xp: 15, load: 0 }
   ]
 };
 
 export default function App() {
-  
-  // SETUP STATE
+  // STATE
   const [stats, setStats] = useState<Stats>(() => {
     const saved = localStorage.getItem('vsm-stats');
     let parsed = saved ? JSON.parse(saved) : null;
-    
     const defaults: Stats = {
       Structure: { level: 1, xp: 10 },
       Yield: { level: 1, xp: 5 },
@@ -120,12 +90,9 @@ export default function App() {
       Energy: { level: 1, xp: 12 },
       Morale: { level: 1, xp: 4 }
     };
-
     if (!parsed) return defaults;
-
-    // Migrering för gammal data
-    // @ts-ignore (Vi ignorerar typkollen här för säkerhets skull vid migrering)
-    if (typeof parsed.Structure === 'number') {
+    // @ts-ignore
+    if (typeof parsed.Structure === 'number') { 
        const migrated: Stats = {};
        // @ts-ignore
        Object.keys(parsed).forEach(k => migrated[k] = { level: 1, xp: parsed[k] });
@@ -139,6 +106,7 @@ export default function App() {
     return saved ? JSON.parse(saved) : 20;
   });
   
+  const [duressMode, setDuressMode] = useState<DuressMode>('NONE');
   const [logs, setLogs] = useState<string[]>(["SYSTEM ONLINE.", "AWAITING INPUT."]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [levelUpData, setLevelUpData] = useState<LevelUpData | null>(null);
@@ -154,11 +122,14 @@ export default function App() {
   };
 
   const executeProtocol = (category: string, action: ProtocolAction) => {
+    const multiplier = duressMode !== 'NONE' ? 2 : 1;
+    const finalXp = action.xp * multiplier;
+    
     setLoad(prev => Math.max(0, Math.min(100, prev + action.load)));
 
     setStats(prev => {
       const currentStat = prev[category];
-      let newXp = currentStat.xp + action.xp;
+      let newXp = currentStat.xp + finalXp;
       let newLevel = currentStat.level;
       let leveledUp = false;
       let perkInfo: Perk = { title: "SYSTEM OPTIMIZED", desc: "Capacity increased." };
@@ -167,19 +138,20 @@ export default function App() {
         newXp = newXp - 100;
         newLevel += 1;
         leveledUp = true;
-        
         const perk = EMERGENCE_TREE[category]?.[newLevel];
-        if (perk) {
-          perkInfo = perk;
-        }
+        if (perk) perkInfo = perk;
       }
 
       if (leveledUp) {
         setLevelUpData({ category, level: newLevel, ...perkInfo });
-        addLog(`>>> EMERGENCE: ${category.toUpperCase()} IS NOW LEVEL ${newLevel} <<<`);
+        addLog(`>>> EMERGENCE: ${category} LEVEL ${newLevel} <<<`);
       } else {
-         const type = action.load > 0 ? "STRAIN" : "RECOVERY";
-         addLog(`> ${action.name.toUpperCase()} DONE. (${type})`);
+         let suffix = "";
+         if (duressMode === 'ANXIETY') suffix = " [NOISE DAMPENED]";
+         if (duressMode === 'DEPRESSION') suffix = " [INERTIA BROKEN]";
+         
+         const bonusText = multiplier > 1 ? ` (+${finalXp} XP)` : "";
+         addLog(`> ${action.name.toUpperCase()} DONE.${suffix}${bonusText}`);
       }
 
       return { ...prev, [category]: { level: newLevel, xp: newXp } };
@@ -188,18 +160,40 @@ export default function App() {
     setActiveMenu(null);
   };
 
+  // --- REACTION FUNCTIONS ---
+  
   const handleJamSignal = () => {
+    // Motstånd: Kostar lite energi att blockera, men minskar Load.
     setLoad(prev => Math.max(0, prev - 5));
-    addLog("> SIGNAL JAMMED. RESISTANCE XP GAINED.");
+    addLog("> SIGNAL JAMMED. RESISTANCE SUCCESSFUL.");
+  };
+
+  const handleAcceptance = () => {
+    // Acceptans: Släpper igenom signalen utan att reagera. Minskar Load genom dämpning.
+    // Vi kan också ge lite Tuning-XP här om vi vill, men håller det enkelt nu.
+    setLoad(prev => Math.max(0, prev - 5));
+    addLog("> SIGNAL ACKNOWLEDGED. INTEGRATION COMPLETE.");
   };
 
   const cycleEntropy = () => {
-    setLoad(prev => Math.min(100, prev + 10));
-    addLog("> CYCLE ADVANCED. ENTROPY +10.");
+    // Deprecated. But keeping logic if needed later.
+  };
+
+  // UI Helpers
+  const getContainerClass = () => {
+    if (duressMode === 'ANXIETY') return 'mode-anxiety';
+    if (duressMode === 'DEPRESSION') return 'mode-depression';
+    return '';
+  };
+
+  const getLoadBarColor = () => {
+    if (duressMode === 'ANXIETY') return '#ff3333';
+    if (duressMode === 'DEPRESSION') return '#00ccff';
+    return '#33ff00';
   };
 
   return (
-    <div className="main">
+    <div className={`main ${getContainerClass()}`}>
       <div className="scanlines"></div>
       
       <div className="container">
@@ -208,12 +202,46 @@ export default function App() {
         {/* LOAD */}
         <div style={{marginBottom: '20px'}}>
           <div style={{display:'flex', justifyContent:'space-between'}}>
-             <span className={load > 80 ? "load-text" : ""}>SYSTEM LOAD: {load}%</span>
+             <span className={load > 80 ? "load-text" : ""}>
+               SYSTEM LOAD: {load}% 
+               {duressMode === 'ANXIETY' && " [HIGH FREQ]"}
+               {duressMode === 'DEPRESSION' && " [LOW FREQ]"}
+             </span>
              <span>{load > 80 ? "CRITICAL" : "STABLE"}</span>
           </div>
           <div className={`progress-bar load-bar`}>
-            <div className="fill" style={{width: `${load}%`}}></div>
+            <div 
+              className="fill" 
+              style={{
+                width: `${load}%`, 
+                backgroundColor: getLoadBarColor(),
+                boxShadow: `0 0 10px ${getLoadBarColor()}`
+              }}
+            ></div>
           </div>
+        </div>
+
+        {/* DURESS CONTROLS */}
+        <div className="duress-container">
+          <button 
+            className={`duress-btn anxiety ${duressMode === 'ANXIETY' ? 'active' : ''}`}
+            onClick={() => {
+              setDuressMode(prev => prev === 'ANXIETY' ? 'NONE' : 'ANXIETY');
+              addLog(duressMode !== 'ANXIETY' ? "> PROTOCOL: DAMPENING (ANXIETY)" : "> SYSTEM NORMALIZED.");
+            }}
+          >
+            [ DAMPEN CHAOS ]
+          </button>
+          
+          <button 
+            className={`duress-btn depression ${duressMode === 'DEPRESSION' ? 'active' : ''}`}
+            onClick={() => {
+              setDuressMode(prev => prev === 'DEPRESSION' ? 'NONE' : 'DEPRESSION');
+              addLog(duressMode !== 'DEPRESSION' ? "> PROTOCOL: IGNITION (STASIS)" : "> SYSTEM NORMALIZED.");
+            }}
+          >
+            [ BREAK STASIS ]
+          </button>
         </div>
 
         {/* STATS */}
@@ -235,16 +263,17 @@ export default function App() {
           })}
         </div>
 
-        {/* CONTROLS */}
-        <button className="glitch-btn" onClick={handleJamSignal}>
-          [ JAM SIGNAL / RESIST ]
-        </button>
-
-        <div style={{marginTop: '20px', textAlign: 'center'}}>
-           <button onClick={cycleEntropy}>[ &gt;&gt; ADVANCE CYCLE &gt;&gt; ]</button>
+        {/* REACTION CONTROLS (NEW) */}
+        <div className="reaction-container">
+          <button className="glitch-btn" onClick={handleJamSignal}>
+            [ JAM / RESIST ]
+          </button>
+          <button className="accept-btn" onClick={handleAcceptance}>
+            [ ACCEPT / INTEGRATE ]
+          </button>
         </div>
 
-        <div className="log-window">
+        <div className="log-window" style={{marginTop:'20px'}}>
           {logs.map((log, i) => (
             <div key={i}>{log}</div>
           ))}
@@ -278,6 +307,17 @@ export default function App() {
           <div className="modal-overlay">
             <div className="modal">
               <h2>INITIATE {activeMenu.toUpperCase()}</h2>
+              
+              {duressMode !== 'NONE' && (
+                <p style={{
+                  color: duressMode === 'ANXIETY' ? '#ff3333' : '#00ccff', 
+                  textAlign:'center', 
+                  fontWeight:'bold'
+                }}>
+                  ⚠️ DURESS BONUS ACTIVE (2X XP)
+                </p>
+              )}
+
               {PROTOCOLS[activeMenu].map((action, index) => {
                 const isStrain = action.load > 0;
                 const isRecovery = action.load < 0;
@@ -285,12 +325,17 @@ export default function App() {
                 if (action.load >= 10) loadClass = "strain-high";
                 else if (action.load > 0) loadClass = "strain-low";
                 else if (action.load < 0) loadClass = "recovery";
+                
+                const displayXp = duressMode !== 'NONE' ? action.xp * 2 : action.xp;
+                const xpColor = duressMode === 'ANXIETY' ? '#ff3333' : (duressMode === 'DEPRESSION' ? '#00ccff' : '#fff');
 
                 return (
                   <button key={index} className="action-btn" onClick={() => executeProtocol(activeMenu, action)}>
                     <span>{action.name.toUpperCase()}</span>
                     <div className="action-details">
-                      <div style={{color: '#fff'}}>+{action.xp} XP</div>
+                      <div style={{color: xpColor, fontWeight: duressMode !== 'NONE' ? 'bold' : 'normal'}}>
+                        +{displayXp} XP
+                      </div>
                       <div className={loadClass}>
                         {isStrain ? `COST: ${action.load}` : ''}
                         {isRecovery ? `HEAL: ${Math.abs(action.load)}` : ''}
